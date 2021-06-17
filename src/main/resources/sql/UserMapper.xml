@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper
+		PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="UserMapper">
+ 	
+	<resultMap id="userSelectMap" type="user">
+		<result property="userId" 				column="user_id" 			jdbcType="VARCHAR"/>
+		<result property="userName"				column="name" 				jdbcType="VARCHAR" />
+		<result property="password" 			column="password" 			jdbcType="VARCHAR" />
+		<result property="role" 				column="role" 				jdbcType="VARCHAR" />
+		<result property="gender" 				column="gender" 			jdbcType="VARCHAR" />
+		<result property="phone" 				column="phone" 				jdbcType="VARCHAR" />
+		<result property="birth" 				column="birth" 				jdbcType="DATE" />
+		<result property="profileImageFile" 	column="PROFILE_IMAGE_FILE" jdbcType="VARCHAR" />
+		<result property="email" 				column="email" 				jdbcType="VARCHAR"  />
+		<result property="children" 			column="children" 			jdbcType="NUMERIC" />
+		<result property="qrCode" 				column="qr_code" 			jdbcType="VARCHAR" />
+		<result property="regDate" 				column="reg_date" 			jdbcType="DATE" />
+	</resultMap>
+	
+	<insert id="addUser" parameterType="user">
+	INSERT INTO USERS(
+					user_id,
+					password,
+					email,
+					reg_date,
+					qr_code,
+					role
+	) VALUES (
+					#{userId},
+					#{password},
+					#{email},
+					SYSDATE,
+					#{qrCode},
+					'user'
+	)
+	</insert>
+	 
+	 <select id="loginCheck" parameterType="user" resultMap="userSelectMap">
+	 	SELECT user_id, 
+	 		password, 
+	 		name, 
+	 		role, 
+	 		gender, 
+	 		phone, 
+	 		birth, 
+	 		profile_image_file, 
+	 		email, 
+	 		children, 
+	 		qr_code, 
+	 		reg_date				 
+	 	FROM users
+	 	WHERE user_id = #{userId}
+	 	AND password = #{password}	
+	 </select>
+	 
+	 <update	id="updateUser"	parameterType="user">
+	   	UPDATE users
+	   	<set>
+	   		PASSWORD = #{password},
+	   		NAME 	= #{userName} ,
+			PHONE	= #{phone},
+			GENDER 	= #{gender} ,
+			BIRTH	=	#{birth},
+  			PROFILE_IMAGE_FILE  = #{profileImageFile}
+		</set>
+	   	WHERE user_id = #{userId}
+	 </update>	
+	 
+	 
+	 <select 	id="getUser"	parameterType="string"	resultMap="userSelectMap">
+		SELECT
+		user_id , name , password , 
+		to_char(birth, 'MM/DD/YYYY') as birth , role ,  children , 
+		gender , phone , qr_code , 
+		email , profile_image_file , reg_date 		
+
+		FROM users 
+		WHERE user_id = #{value}
+	 </select>
+	 
+	 <select 	id="getUserByEmail"	parameterType="string"	resultMap="userSelectMap">
+		SELECT
+		user_id , name , password , 
+		birth , role ,  children , 
+		gender , phone , qr_code , 
+		email , profile_image_file , reg_date 		
+
+		FROM users 
+		WHERE email = #{email}
+	 </select>
+	 
+	 
+	 
+	 <select 	id="getPassword"	parameterType="user"	resultMap="userSelectMap">
+		SELECT
+		user_id , name , password , 
+		birth , role ,  children , 
+		gender , phone , qr_code , 
+		email , profile_image_file , reg_date 		
+
+		FROM users 
+		WHERE email = #{email}
+		ANd user_id =#{userId}
+	 </select>
+	 
+	 
+	 <select id="listUser" parameterType="search" resultMap="userSelectMap">
+	  	SELECT *
+		  	FROM (	SELECT inner_table.* , ROWNUM AS row_seq
+	  					FROM		(	SELECT user_id , name , password , 
+												birth , role ,  children , 
+												gender , phone , qr_code , 
+												email , profile_image_file , reg_date 		
+										FROM users
+											<if test="searchCondition != null">
+												<where>
+													<if test="searchCondition == 0 and searchKeyword !='' ">
+										 				user_id = #{searchKeyword}
+													</if>
+													<if test="searchCondition == 1 and searchKeyword !='' ">
+										 				name = #{searchKeyword}
+													</if>
+												</where>
+											</if>
+											ORDER BY user_id ) inner_table
+						WHERE ROWNUM &lt;= #{endRowNum} )
+		WHERE row_seq BETWEEN #{startRowNum} AND #{endRowNum} 
+	 </select>
+	 
+	 
+	  <select  id="getTotalCount"  parameterType="search"	 resultType="int">
+	  	SELECT COUNT(*)
+	  	FROM(	SELECT user_id , name , email
+						FROM users
+						<if test="searchCondition != null">
+							<where>
+								<if test="searchCondition == 0 and searchKeyword !='' ">
+						 			user_id = #{searchKeyword}
+								</if>
+								<if test="searchCondition == 1 and searchKeyword !='' ">
+						 		name = #{searchKeyword}
+								</if>
+							</where>
+						</if> ) countTable						
+	 </select>
+	 
+	<select id="checkId"  parameterType="string" resultType="int">
+  	 
+		SELECT COUNT(*) FROM USERS WHERE user_id = #{userId}
+     
+	</select>
+	 
+</mapper>

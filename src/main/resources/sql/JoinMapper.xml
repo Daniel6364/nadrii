@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper
+		PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="JoinMapper">
+ 	
+	<resultMap id="joinSelectMap" type="join">
+		<result property="joinNo"			column="join_no"		jdbcType="NUMERIC"/>
+		<result property="groupNo"		column="group_no"	jdbcType="NUMERIC"/>
+		<result property="user.userId"			column="user_id"		jdbcType="VARCHAR"/>
+		<result property="user.profileImageFile"		column="profile_image_file"			jdbcType="VARCHAR"/>
+		<result property="groupRole"	column="group_role"	jdbcType="NUMERIC"/>	
+		<result property="regDate" 		column="reg_date"		jdbcType="VARCHAR" />
+	</resultMap>
+	
+	<insert id="addJoin"		parameterType="join" >
+	 	INSERT
+		INTO join ( join_no, group_no, user_id, group_role, reg_date ) 
+		VALUES (	seq_join_member_join_no.nextval, #{groupNo}, #{user.userId}, #{groupRole}, SYSDATE )
+	</insert>
+
+	<select id="getJoinList"		parameterType="Search"	resultMap="joinSelectMap">
+		SELECT *
+	  	FROM (	SELECT inner_table.* , ROWNUM AS row_seq
+
+	  				FROM		(	SELECT join_no, group_no, user_id, group_role, reg_date
+									FROM join 
+									WHERE user_id = #{searchKeyword}
+									) inner_table
+					WHERE ROWNUM &lt;= #{endRowNum} )
+		WHERE row_seq BETWEEN #{startRowNum} AND #{endRowNum} 
+	</select>
+	
+	<select id="getJoinMemberList"		parameterType="Search"	resultMap="joinSelectMap">
+		SELECT join_no, group_no, j.user_id, group_role, profile_image_file
+		FROM join j, users u
+		WHERE group_no = #{searchKeyword}
+		AND j.user_id = u.user_id
+		ORDER BY join_no ASC
+	</select>
+		
+	<delete id="deleteJoin"	parameterType="join">
+	 	DELETE FROM join
+	 	<where>
+	 		group_no = #{groupNo} AND user_id = #{user.userId}
+	 	</where>
+	 </delete>
+	 
+	 <select  id="getTotalJoinCount"  parameterType="search"	 resultType="int">
+	  	SELECT COUNT(*)
+	  	FROM  (	SELECT join_no, group_no, user_id, group_role
+					FROM join
+					WHERE user_id = #{searchKeyword}
+					 ) countTable		
+	 </select>
+	 
+	 <select  id="getTotalMemberCount"  parameterType="search"	 resultType="int">
+	  	SELECT COUNT(*)
+	  	FROM  (	SELECT join_no, group_no, user_id, group_role
+					FROM join
+					WHERE group_no = #{searchKeyword}
+					ORDER BY join_no ASC
+					 ) countTable		
+	 </select>
+	 
+</mapper>

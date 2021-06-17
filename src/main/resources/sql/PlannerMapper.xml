@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper
+		PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PlannerMapper">
+
+	<resultMap type="com.yagn.nadrii.service.domain.Planner" id="plannerSelectMap">
+		<result property="postNo" column="post_no" jdbcType="NUMERIC"/>
+		<result property="user.userId" column="user_id" jdbcType="VARCHAR"/>
+		<result property="user.profileImageFile"	column="profile_image_file"		jdbcType="VARCHAR"/>
+		<result property="title" column="title" jdbcType="VARCHAR"/>
+		<result property="lat" column="lat" jdbcType="VARCHAR"/>
+		<result property="lng" column="lng" jdbcType="VARCHAR"/>
+		<result property="regDate" column="reg_date" jdbcType="DATE"/>
+		<result property="viewCount" column="view_count" jdbcType="NUMERIC"/>
+		<result property="flag" column="flag_pu" jdbcType="VARCHAR"/>
+		<result property="photo" column="THUMBNAIL_IMAGE_FILE" jdbcType="DATE"/>
+		<result property="text" column="text" jdbcType="CLOB"/>
+	</resultMap>
+	
+	<insert id="addPlanner" parameterType="com.yagn.nadrii.service.domain.Planner">
+		
+		INSERT
+		INTO POST( post_no,
+			 	user_id,
+			 	title,
+			 	lat,
+			 	lng,
+			 	reg_date,
+			 	view_count,
+			 	flag_pu,
+			 	THUMBNAIL_IMAGE_FILE,
+			 	text)
+		VALUES ( seq_post_post_no_pl.nextval,
+			 	#{user.userId},
+			 	#{title},
+			 	#{lat},
+			 	#{lng},
+			 	SYSDATE,
+			 	#{viewCount},
+			 	#{flag},
+			 	#{photo},
+			 	#{text})
+		
+	</insert>
+	
+	<select  id="getTotalCount"  parameterType="map"	 resultType="int">
+		SELECT COUNT(*)
+	  	FROM(	SELECT post_no, user_id, title, text, thumbnail_image_file, reg_date, view_count, lat, lng
+	  									FROM post
+										<where>
+											<if test="searchCondition != null">
+												<if test="searchCondition == 0 and searchKeyword !='' ">
+						 							title LIKE '%${search.searchKeyword}%' AND
+												</if>
+												<if test="searchCondition == 1 and searchKeyword !='' ">
+						 							text LIKE '%${search.searchKeyword}%' AND
+												</if>
+												<if test="searchCondition == 2 and searchKeyword !='' ">
+						 							hashtag LIKE '%${search.searchKeyword}%' AND
+												</if>
+											</if>
+											<if test="plannerMakerId != null">
+											 	user_id in #{plannerMakerId} AND
+											</if>
+											flag_pu='pl'											
+										</where>
+						) countTable						
+	</select>
+	
+	<select id="listPlanner" parameterType="map" resultMap="plannerSelectMap">
+		SELECT *
+	  	FROM (	SELECT inner_table.* , ROWNUM AS row_seq
+	  					FROM		(	SELECT p.post_no, p.user_id, p.title, p.text, p.thumbnail_image_file, p.reg_date, p.view_count, p.hashtag, p.lat, p.lng, u.profile_image_file
+	  									FROM post p, users u
+										<where>
+											<if test="#{search.searchCondition} != null">
+												<if test="#{search.searchKeyword} !='' ">
+						 							p.title LIKE '%${search.searchKeyword}%' AND
+												</if>
+												
+											</if>
+											<if test="plannerMakerId != null">
+											 	p.user_id in #{plannerMakerId} AND
+											</if>
+											p.user_id = u.user_id AND
+											flag_pu='pl'
+											ORDER BY post_no DESC
+										</where>
+										) inner_table
+						WHERE ROWNUM &lt;= #{search.endRowNum} )
+		WHERE row_seq BETWEEN #{search.startRowNum} AND #{search.endRowNum} 
+	</select>
+	
+	
+	<select id="getPlanner" parameterType="int" resultMap = "plannerSelectMap">
+		SELECT p.*, profile_image_file 
+		FROM post p, users u
+		WHERE post_no in #{postNo} AND p.user_id = u.user_id
+	</select>
+	
+	<update id="updatePlanner" parameterType="planner">
+		UPDATE post
+		<set>
+			title = '${title}',
+			lat = '${lat}',
+			lng = '${lng}',
+			text = '${text}',
+			THUMBNAIL_IMAGE_FILE = '${photo}'
+		</set>
+		WHERE post_no in '${postNo}'
+	</update>
+	
+	<delete id="deletePlanner" parameterType="int">
+		DELETE
+		FROM post
+		WHERE post_no in #{postNo}
+	</delete>
+	
+	<update id="updateViewCount" parameterType="int">
+		UPDATE post
+		<set>
+			view_count = view_count+1
+		</set>
+		WHERE post_no = #{postNo}
+	</update>
+	
+ 	 
+</mapper>

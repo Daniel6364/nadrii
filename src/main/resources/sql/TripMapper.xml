@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper
+		PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="TripMapper">
+
+	<resultMap type="trip" id="tripSelectMap">
+		<result property="postNo" column="post_no" jdbcType="NUMERIC"/>
+		<result property="lat" column="lat" jdbcType="VARCHAR"/>
+		<result property="lng" column="lng" jdbcType="VARCHAR"/>
+		<result property="address" column="address" jdbcType="VARCHAR"/>
+		<result property="thumbnailImageFile" column="thumbnail_image_file" jdbcType="VARCHAR"/>
+		<result property="viewCount" column="view_count" jdbcType="NUMERIC"/>
+		<result property="description" column="description" jdbcType="VARCHAR"/>
+		<result property="tripName" column="trip_name" jdbcType="VARCHAR"/>
+		<result property="createdTime" column="createdtime" jdbcType="VARCHAR"/>
+		<result property="contentId" column="contentid" jdbcType="VARCHAR"/>
+		<result property="contentTypeId" column="contenttypeid" jdbcType="VARCHAR"/>
+	</resultMap>
+	
+	
+	<!-- SQL: INSERT -->
+	<insert id="addTrip" parameterType="trip">
+		INSERT
+		INTO trip(
+				post_no,
+				lat,
+				lng,
+				address,
+				thumbnail_image_file,
+				view_count,
+				description,
+				trip_name,
+				createdtime,
+				contentid,
+				contenttypeid)
+		VALUES(
+		seq_trip_post_no.nextval,
+		#{lat},
+		#{lng},
+		#{address:VARCHAR},
+		#{thumbnailImageFile:VARCHAR},
+		1,
+		#{description:VARCHAR},
+		#{tripName:VARCHAR},
+		#{createdTime:VARCHAR},
+		#{contentId:VARCHAR},
+		#{contentTypeId:VARCHAR})		
+	<selectKey resultType="integer" keyProperty="postNo" order="AFTER">
+        SELECT seq_trip_post_no.currval FROM dual        
+    </selectKey>    
+	
+	</insert>
+	
+	<select id="getTrip" parameterType="integer" resultMap="tripSelectMap">
+		SELECT
+			post_no,
+			lat,
+			lng,
+			address,
+			thumbnail_image_file,
+			view_count,
+			description,
+			trip_name,
+			createdtime,
+			contentid,
+			contenttypeid
+		FROM trip
+		WHERE post_no = #{postNo}
+	</select>
+	
+	<select id="listTripinDB" resultMap="tripSelectMap">
+		Select 
+			post_no,
+			lat,
+			lng,
+			address,
+			thumbnail_image_file,
+			view_count,
+			description,
+			trip_name,
+			createdtime,
+			contentid,
+			contenttypeid
+		FROM trip
+	</select>
+	
+	<select id="listTrip" parameterType="search" resultMap="tripSelectMap" >
+		SELECT *
+	  	FROM (	SELECT inner_table.* , ROWNUM AS row_seq
+	  			FROM	(	SELECT t.* 
+							FROM trip t
+								<if test="searchCondition != null">
+									<where>
+										<!-- 여행지명 검색 -->
+										<if test="searchCondition == 0 and searchKeyword !='' ">
+							 				trip_name LIKE #{searchKeyword}
+										</if>
+										
+										<!-- 주소검색 -->
+										<if test="searchCondition == 1 and searchKeyword !='' ">
+							 				address LIKE #{searchKeyword}
+										</if>
+									</where>
+								</if>
+					ORDER BY post_no ) inner_table
+	 
+				WHERE ROWNUM &lt;= #{endRowNum} )
+		WHERE row_seq BETWEEN #{startRowNum} AND #{endRowNum}
+	
+		
+	</select>
+	
+	<update id="updateViewCount" parameterType="integer">
+		UPDATE trip
+		<set>
+			view_count = view_count+1
+		</set>
+		WHERE contentid =#{contentid}
+			
+	
+	</update> 
+	
+	<select id="tripCheckDuplication" parameterType="string" resultMap="tripSelectMap">
+		SELECT post_no,
+			lat,
+			lng,
+			address,
+			thumbnail_image_file,
+			view_count,
+			description,
+			trip_name,
+			createdtime,
+			contentid,
+			contenttypeid
+		FROM trip
+		WHERE contentid = #{contentid}
+	
+	</select>
+	
+	
+	
+ 	 
+</mapper>

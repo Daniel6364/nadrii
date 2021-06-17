@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper
+		PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="GroupMapper">
+ 	
+	<resultMap id="groupSelectMap" type="group">
+		<result property="join.joinNo"		column="join_no"			jdbcType="NUMERIC"/>
+		<result property="join.groupNo"		column="group_no"		jdbcType="NUMERIC"/>
+		<result property="join.user.userId"		column="user_id"			jdbcType="VARCHAR"/>
+		<result property="join.user.profileImageFile"		column="profile_image_file"			jdbcType="VARCHAR"/>
+		<result property="join.groupRole"	column="group_role"		jdbcType="NUMERIC"/>
+		<result property="title"					column="title" 				jdbcType="VARCHAR" />
+		<result property="text"					column="text" 				jdbcType="CLOB" />
+		<result property="regDate" 			column="reg_date" 		jdbcType="DATE" />
+		<result property="viewCount"			column="view_count"		jdbcType="NUMERIC" />
+		<result property="placeName"		column="place_name" 		jdbcType="VARCHAR" />
+		<result property="placeDetail"		column="place_detail" 		jdbcType="VARCHAR" />
+		<result property="lat"					column="lat" 				jdbcType="VARCHAR" />
+		<result property="lng"					column="lng" 				jdbcType="VARCHAR" />
+		<result property="meetingDate" 		column="meeting_date" 	jdbcType="DATE" />		
+	</resultMap>
+	
+	<!-- SQL : INSERT -->
+	<insert 	id="addGroup"		parameterType="group" >
+	 	INSERT
+		INTO groups ( group_no, title, text, view_count, place_name, place_detail, lat, lng, meeting_date, reg_date ) 
+		VALUES (	seq_groups_group_no.nextval, #{title}, #{text}, 0, #{placeName:VARCHAR}, #{placeDetail:VARCHAR},
+					#{lat:VARCHAR}, #{lng:VARCHAR}, #{meetingDate:VARCHAR}, SYSDATE )
+	</insert>
+	
+	<select 	id="getGroupNo"	parameterType="group"	resultType="int">
+		SELECT
+		group_no
+		FROM groups
+		WHERE title=#{title} AND dbms_lob.compare(text, #{text})=0
+	</select>	 
+	 
+	 <!-- SQL : SELECT ONE -->
+	<select 	id="getGroup"	parameterType="int"	resultMap="groupSelectMap">
+		SELECT
+		j.user_id, g.group_no, g.title, g.text, g.view_count, g.place_name, g.place_detail, g.lat, g.lng, g.meeting_date, g.reg_date, profile_image_file
+		FROM groups g, join j, users u
+		WHERE g.group_no = j.group_no
+				AND j.group_role = 1
+				AND g.group_no = #{value}
+				AND j.user_id = u.user_id
+	</select>
+	
+	<update	id="updateViewCount"		parameterType="group" >
+		UPDATE groups
+	   	<set>
+	   		view_count = #{viewCount}+1
+	   	</set>
+	   	WHERE group_no = #{join.groupNo}
+	</update>
+	 
+	 <!-- SQL : UPDATE -->
+	<update	id="updateGroup"		parameterType="group" >
+		UPDATE groups
+	   	<set>
+	   		title 				= #{title}, 
+	   		text 				= #{text},
+	   		place_name		= #{placeName:VARCHAR},
+	   		place_detail		= #{placeDetail:VARCHAR},
+	   		lat 					= #{lat:VARCHAR}, 
+	   		lng 				= #{lng:VARCHAR},
+	   		meeting_date 	= #{meetingDate:VARCHAR}
+	   	</set>
+	   	WHERE group_no = #{join.groupNo}
+	</update>
+	
+	<delete id="deleteGroup"		parameterType="group">
+	 	DELETE FROM groups
+	 	<where>
+	 		group_no = #{join.groupNo}
+	 	</where>
+	 </delete>
+	 
+	<!-- SQL : SELECT LIST -->
+	<select  id="listGroup"  parameterType="search"	resultMap="groupSelectMap">
+	  	SELECT *
+	  	FROM (	SELECT inner_table.* , ROWNUM AS row_seq
+	  				FROM		(	SELECT
+									j.user_id, g.group_no, g.title, g.text, g.view_count, g.place_name, g.place_detail, g.lat, g.lng, g.meeting_date, g.reg_date, profile_image_file
+									FROM groups g, join j, users u
+									WHERE g.group_no = j.group_no
+											AND j.group_role = 1
+											AND j.user_id = u.user_id
+									<if test="searchCondition != null">
+										<if test="searchCondition == 0 and searchKeyword !='' ">
+											AND (g.title LIKE '%${searchKeyword}%' OR g.text LIKE '%${searchKeyword}%')
+										</if>
+									</if>
+									ORDER BY g.reg_date DESC ) inner_table
+					WHERE ROWNUM &lt;= #{endRowNum} )
+		WHERE row_seq BETWEEN #{startRowNum} AND #{endRowNum} 
+	 </select>
+	 	<!--  위 두번째 subQuery 의  
+	 			WHERE ROWNUM &lt;= #{endRowNum} ) 는
+	 			WHERE ROWNUM <= #{endRowNum} ) 의미이며..
+	 			< 는 keyword 로 &lt; 를	사용.
+	 			
+	 			<![CDATA[  ~~~  ]]> 를 이용하여 아래와 같이 사용  할 수 있다.
+	 			CDATA ==> Character Data 의 의미 Java 에서 \n 같은 특수문자 처리  
+
+				WHERE ROWNUM <![CDATA[ <=]]> #{endRowNum} )
+		-->
+	
+	<!-- SQL : SELECT ROW Count -->	 
+	 <select  id="getTotalCount"  parameterType="search"	 resultType="int">
+	  	SELECT COUNT(*)
+	  	FROM  (	SELECT
+					j.user_id, g.group_no, g.title, g.text, g.view_count, g.place_name, g.place_detail, g.lat, g.lng, g.meeting_date, g.reg_date
+					FROM groups g, join j
+					WHERE g.group_no = j.group_no
+							AND j.group_role = 1
+							<if test="searchCondition == 0 and searchKeyword !='' ">
+								AND (g.title LIKE '%${searchKeyword}%' OR g.text LIKE '%${searchKeyword}%')
+							</if>
+					 ) countTable				
+							
+	 </select>
+	 
+</mapper>

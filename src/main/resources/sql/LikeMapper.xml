@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper
+		PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="LikeMapper">
+ 	
+	<resultMap id="likeSelectMap" type="like">
+		<result property="likeNo"			column="like_no"		jdbcType="NUMERIC"/>
+		<result property="postNo"		column="post_no"		jdbcType="NUMERIC"/>
+		<result property="userId"			column="user_id"		jdbcType="VARCHAR"/>
+		<result property="regDate"		column="reg_date"		jdbcType="DATE"/>	
+	</resultMap>
+	
+	<insert id="addLike"		parameterType="like" >
+	 	INSERT
+		INTO likes ( like_no, post_no, user_id, reg_date ) 
+		VALUES (	seq_likes_like_no.nextval, #{postNo}, #{userId}, SYSDATE )
+	</insert>
+		
+	<delete id="deleteLike"		parameterType="like">
+	 	DELETE FROM likes
+	 	<where>
+	 		post_no = #{postNo} AND user_id = #{userId}
+	 	</where>
+	 </delete>
+	 
+	<select id="listLikeById"		parameterType="search"	resultMap="likeSelectMap">
+		SELECT *
+	  	FROM (	SELECT inner_table.* , ROWNUM AS row_seq
+	  				FROM		(	SELECT distinct like_no, likes.post_no, likes.user_id, likes.reg_date
+									FROM likes, post, groups
+									WHERE likes.user_id = #{searchKeyword} AND (likes.post_no = post.post_no OR likes.post_no = groups.group_no)
+									ORDER BY likes.reg_date DESC
+									) inner_table
+					WHERE ROWNUM &lt;= #{endRowNum} )
+		WHERE row_seq BETWEEN #{startRowNum} AND #{endRowNum} 
+	</select>
+
+	 <select  id="getTotalLikeById"  parameterType="search"	 resultType="int">
+	  	SELECT COUNT(*)
+	  	FROM  (	SELECT distinct like_no, likes.post_no, likes.user_id, likes.reg_date
+					FROM likes, post, groups
+					WHERE likes.user_id = #{searchKeyword} AND (likes.post_no = post.post_no OR likes.post_no = groups.group_no)
+					 ) countTable		
+	 </select>
+	 
+	 <select id="listLikeByPost"		parameterType="like"	resultMap="likeSelectMap">
+		SELECT like_no, post_no, user_id, reg_date
+		FROM likes
+		WHERE post_no = #{postNo}
+	</select>
+	 
+	 <select  id="getTotalLikeByPost"  parameterType="like"	 resultType="int">
+	  	SELECT COUNT(*)
+	  	FROM  (	SELECT like_no, post_no, user_id, reg_date
+					FROM likes
+					WHERE post_no = #{postNo}	) countTable		
+	 </select>
+	
+</mapper>

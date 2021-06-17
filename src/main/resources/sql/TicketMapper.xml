@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+		  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+		  
+<mapper namespace="TicketMapper">
+
+	<resultMap id="ticketSelectMap" type="ticket" >
+		<result property="postNo" 				column="post_no" 		 	jdbcType="NUMERIC"/>
+		<result property="ticketTitle" 			column="ticket_title" 	 	jdbcType="VARCHAR"/>
+		<result property="lat" 					column="lat"			 	jdbcType="VARCHAR"/>
+		<result property="lng"		 			column="lng"	 			jdbcType="VARCHAR"/>
+		<result property="contentid" 			column="content_id" 	 	jdbcType="NUMERIC"/>
+		<result property="contenttypeid" 		column="content_typeid" 	jdbcType="NUMERIC"/>
+		<result property="ticketImage" 			column="ticket_image"	 	jdbcType="VARCHAR"/>
+		
+	</resultMap>
+	
+	<insert id="addTicketLog" parameterType="ticket">
+		INSERT
+		INTO ticket (
+						post_no,
+						ticket_title,
+						lat,
+						lng,
+						content_id,
+						content_typeid,
+						ticket_image
+					)
+		VALUES (
+				seq_ticket_post_no.NEXTVAL,
+				#{ticketTitle},
+				#{lat},
+				#{lng},
+				#{contentid},
+				#{contenttypeid},
+				#{ticketImage}
+			)
+	</insert>
+	
+	<select id="ticketCheckDuplication" parameterType="string" resultMap="ticketSelectMap">
+		SELECT 
+			post_no,
+			ticket_title,
+			lat,
+			lng,
+			content_id,
+			content_typeid,
+			ticket_image
+		FROM ticket
+		WHERE content_id = #{contentid}
+	</select>
+	
+</mapper>

@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+		  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+		  
+<mapper namespace="PurchaseMapper">
+
+	<resultMap id="purchaseSelectMap" type="purchase" >
+		<result property="postNo" 				column="post_no" 		 	jdbcType="NUMERIC"/>
+		<result property="ticketTitle" 			column="ticket_title" 	 	jdbcType="VARCHAR"/>
+		<result property="ticketImage" 			column="ticket_image"	 	jdbcType="VARCHAR"/>
+		<result property="bookingDate" 			column="booking_date"	 	jdbcType="VARCHAR"/>
+		<result property="cancelDate"			column="cancel_date"	 	jdbcType="VARCHAR"/>
+		<result property="ticketPriceAll"		column="ticket_priceall" 	jdbcType="VARCHAR"/>
+		<result property="contentId" 			column="content_id" 	 	jdbcType="NUMERIC"/>
+		<result property="contentTypeId" 		column="content_typeid" 	jdbcType="NUMERIC"/>
+		<result property="flag" 				column="flag_bp" 	 		jdbcType="VARCHAR"/>
+		<result property="regDate"				column="reg_date" 	 		jdbcType="DATE"/>
+		<result property="buyer.userId"			column="buyer_id" 	 		jdbcType="VARCHAR"/>
+		<result property="buyer.email"			column="buyer_email"  		jdbcType="VARCHAR"/>
+		<result property="buyer.phone"			column="buyer_phone"  		jdbcType="VARCHAR"/>
+		<result property="buyer.userName"		column="buyer_name"  		jdbcType="VARCHAR"/>
+<!-- 	<result property="qrCode"				column="qr_code"  			jdbcType="VARCHAR"/> -->
+		
+	</resultMap>
+	
+	<insert id="addPurchase" parameterType="purchase">
+		INSERT
+		INTO purchase (
+						post_no,
+						ticket_title,
+						ticket_image,
+						booking_date,
+						cancel_date,	
+						ticket_priceall,
+						content_id,
+						content_typeid,
+						flag_bp,
+						reg_date,
+						buyer_id,
+						buyer_email,
+						buyer_phone,
+						buyer_name
+						)
+		VALUES (
+				seq_purchase_post_no.NEXTVAL,
+				#{ticketTitle},
+				#{ticketImage},
+				#{bookingDate},
+				#{cancelDate},
+				#{ticketPriceAll},
+				#{contentId},
+				#{contentTypeId},
+				#{flag},
+				SYSDATE,
+				#{buyer.userId},
+				#{buyer.email},
+				#{buyer.phone},
+				#{buyer.userName}
+				)
+	</insert>
+	
+	<update id="updateBasketPurchase" parameterType="list">
+		UPDATE purchase 
+		<set>
+			flag_bp = 'purchase' 
+		</set>
+		WHERE post_no IN
+	<foreach collection="list" item="postNo" index="index"
+      open="(" separator="," close=")">
+        #{postNo}
+  	</foreach>
+	</update>
+	
+	
+	<update id="updatePurchaseQR" parameterType="int">
+		UPDATE purchase 
+		<set>
+			flag_bp = 'adminCheck'
+		</set>	 
+		WHERE post_no = #{postNo}
+	</update>
+	
+	
+	
+	<select id="getBasketList" parameterType="map" resultMap="purchaseSelectMap">
+	SELECT
+			post_no,
+			ticket_title,
+			ticket_image,
+			booking_date,
+			cancel_date,
+			ticket_priceall,
+			content_id,
+			content_typeid,
+			flag_bp,
+			reg_date,
+			buyer_id,
+			buyer_email,
+			buyer_phone,
+			buyer_name
+	FROM PURCHASE
+	WHERE buyer_id = #{buyerId}
+	AND flag_bp = 'basket'
+	</select>
+	
+	<select id="getBasketTicket" parameterType="list" resultMap="purchaseSelectMap">
+	SELECT
+			post_no,
+			ticket_title,
+			ticket_image,
+			booking_date,
+			cancel_date,
+			ticket_priceall,
+			content_id,
+			content_typeid,
+			flag_bp,
+			reg_date,
+			buyer_id,
+			buyer_email,
+			buyer_phone,
+			buyer_name
+	FROM PURCHASE
+	WHERE post_no IN
+	<foreach collection="list" item="postNo" index="index"
+      open="(" separator="," close=")">
+        #{postNo}
+  	</foreach>
+	</select>
+	
+	<delete id="deleteBasketList" parameterType="list">
+	DELETE FROM purchase
+	WHERE post_no IN 
+	<foreach collection="list" item="postNo" index="index"
+      open="(" separator="," close=")">
+        #{postNo}
+  	</foreach>
+	</delete>
+	
+	<select id="getPurchaseList" parameterType="map" resultMap="purchaseSelectMap">
+	SELECT
+			post_no,
+			ticket_title,
+			ticket_image,
+			booking_date,
+			cancel_date,
+			ticket_priceall,
+			content_id,
+			content_typeid,
+			flag_bp,
+			reg_date,
+			buyer_id,
+			buyer_email,
+			buyer_phone,
+			buyer_name
+	FROM PURCHASE
+	WHERE buyer_id = #{buyerId}
+	AND flag_bp = 'purchase'
+	</select>
+	
+	<select id="getPurchasedList" parameterType="map" resultMap="purchaseSelectMap">
+	SELECT
+			post_no,
+			ticket_title,
+			ticket_image,
+			booking_date,
+			cancel_date,
+			ticket_priceall,
+			content_id,
+			content_typeid,
+			flag_bp,
+			reg_date,
+			buyer_id,
+			buyer_email,
+			buyer_phone,
+			buyer_name
+	FROM PURCHASE
+	WHERE buyer_id = #{buyerId}
+	AND flag_bp = 'adminCheck'
+	</select>
+	
+
+<!-- SQL : SELECT ROW Count -->
+	<select id="getTotalCount" parameterType="string" resultType="int">
+		SELECT COUNT(*)
+		FROM( SELECT *
+			  FROM purchase
+			  ) countTable
+		WHERE buyer_id = #{ buyerId }
+	</select>
+
+</mapper>

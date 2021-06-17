@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper
+		PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="CommentMapper">
+ 	
+	<resultMap id="communitySelectMap" type="com.yagn.nadrii.service.domain.Comments">
+		<result property="commentNo" column="comment_no" jdbcType="NUMERIC" />
+		<result property="user.userId" column="user_id" jdbcType="VARCHAR" />
+		<result property="postNo" column="post_no" jdbcType="NUMERIC" />
+		<result property="regDate" column="reg_date" jdbcType="VARCHAR" />
+		<result property="text" column="text" jdbcType="VARCHAR" />
+		<result property="user.profileImageFile" column="profile_image_file" jdbcType="VARCHAR" />
+	</resultMap>
+	
+	<!-- comm의 Create(insert) -->
+	<insert id="addComment" parameterType="com.yagn.nadrii.service.domain.Comments">
+		INSERT INTO comments(comment_no, user_id, post_no, text, reg_date)
+		VALUES(seq_comments_comment_no.nextval, #{user.userId}, #{postNo}, #{text}, SYSDATE) 
+	</insert>
+
+	
+	<!-- comm의 Read(select) -->
+	<select id="getCommentNo" parameterType="com.yagn.nadrii.service.domain.Comments" resultType="int">
+		SELECT comment_no FROM comments WHERE user_id=#{user.userId} AND reg_date=#{regDage}
+	</select>
+	
+	<select id="getComment" parameterType="int" resultMap="communitySelectMap">
+		SELECT comment_no, user_id, post_no, text, reg_date FROM comments WHERE comment_no=#{commentNo}
+ 	</select>
+	
+	<select id="listCommentByPost" parameterType="int" resultMap="communitySelectMap">
+		SELECT comment_no, comments.user_id, post_no, text, comments.reg_date, profile_image_file FROM comments, users WHERE post_no=#{postNo} AND comments.user_id = users.user_id
+		ORDER BY comments.reg_date DESC
+ 	</select>
+ 	
+ 	<select id="listCommentById" parameterType="com.yagn.nadrii.common.Search" resultMap="communitySelectMap">
+		SELECT * FROM (SELECT ROWNUM row_num, inner_table.*
+		FROM (SELECT distinct comment_no, comments.user_id, comments.post_no, comments.text, comments.reg_date FROM comments, post, groups WHERE comments.user_id=#{searchKeyword} AND (comments.post_no = post.post_no OR comments.post_no = groups.group_no)
+ 		ORDER BY comments.reg_date DESC) inner_table
+ 		WHERE ROWNUM &lt;= #{endRowNum} )
+		WHERE row_num BETWEEN #{startRowNum} AND #{endRowNum} 
+ 		
+ 	</select>
+	
+	<!-- comm의 Update(update) -->
+	
+	<update id="updateComment" parameterType="com.yagn.nadrii.service.domain.Comments">
+		UPDATE comments
+		SET text=#{text}
+		WHERE comment_no=#{commentNo}
+	</update>
+	
+	<select  id="getTotalCount_postNo"  parameterType="int"	 resultType="int">
+		SELECT COUNT(*)
+	  	FROM(	SELECT comment_no, user_id, text, reg_date 
+	  	FROM comments 
+	  	WHERE post_no=#{postNo}
+						) countTable						
+	</select>
+	
+	<select  id="getTotalCount_Id"  parameterType="String"	 resultType="int">
+		SELECT COUNT(*)
+	  	FROM(	SELECT distinct comment_no, comments.user_id, comments.text, comments.reg_date 
+	  	FROM comments, post, groups
+	  	WHERE comments.user_id=#{userId} AND (comments.post_no = post.post_no OR comments.post_no = groups.group_no)
+						) countTable						
+	</select>
+	 
+	<!-- comm의 delete -->
+	<delete id="deleteComment" parameterType="int">
+		DELETE FROM comments WHERE comment_no=#{value}
+	</delete>
+	
+	<delete id="deleteCommentByPost" parameterType="int">
+		DELETE FROM comments WHERE post_no=#{value}
+	</delete>
+	
+	<select id="listTitles_post" parameterType="int" resultType="String">
+		SELECT title FROM post WHERE post_no=#{value}
+	</select>
+	
+	<select id="listTitles_groups" parameterType="int" resultType="String">
+		SELECT title FROM groups WHERE group_no=#{value}
+	</select>
+	
+</mapper>

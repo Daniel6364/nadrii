@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper
+		PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="WishMapper">
+
+	<resultMap type="wish" id="WishSelectMap">
+		<result property="wishNo" column="wish_no" jdbcType="NUMERIC"/>
+		<result property="userId" column="user_id" jdbcType="VARCHAR"/>
+		<result property="trip.postNo" column="trip_no" jdbcType="NUMERIC"/>
+		<result property="ticket.postNo" column="ticket_no" jdbcType="NUMERIC"/>
+		<result property="postNo" column="post_no" jdbcType="NUMERIC"/>		
+	</resultMap>
+	
+	
+	<!-- SQL: INSERT -->
+	<insert id="addWishFromTrip" parameterType="wish">
+		INSERT
+		INTO wish(wish_no, user_id, trip_no, post_no)
+		VALUES( seq_wish_wish_no.nextval, #{userId:VARCHAR}, #{trip.postNo:NUMERIC}, null)
+	</insert>
+
+	<insert id="addWishFromTicket" parameterType="wish">
+		INSERT
+		INTO wish(wish_no, user_id, ticket_no, post_no)
+		VALUES( seq_wish_wish_no.nextval, #{userId:VARCHAR}, #{ticket.postNo:NUMERIC}, null)
+	</insert>
+
+	<delete id="deleteWish" parameterType="integer">
+		DELETE 
+		FROM wish
+		WHERE trip_no = #{postNo:NUMERIC} AND user_id = #{userId}
+	</delete>
+
+	<insert id="addWishFromPost" parameterType="wish">
+		INSERT
+		INTO wish(wish_no, user_id, trip_no, post_no)
+		
+		VALUES(
+		seq_wish_wish_no.nextval,
+		#{userId:VARCHAR},
+		null,
+		#{trip.postNo:NUMERIC})
+	
+	</insert>
+	
+	<select id="getWish" parameterType="integer" resultMap="WishSelectMap">
+		SELECT 
+			wish_no, 
+			user_id, 
+			trip_no, 
+			post_no			
+		FROM wish
+		WHERE wish_no = #{wishNo}	
+	</select>
+	
+	<select id="getWishByTripNo" parameterType="map" resultMap="WishSelectMap">
+		SELECT
+			wish_no,
+			user_id, 
+			trip_no, 
+			post_no
+		FROM wish
+		WHERE user_id = #{userId}
+		AND trip_no = #{tripNo}
+	</select>
+	
+	<select id="listWish" parameterType="string" resultMap="WishSelectMap">
+		SELECT
+			wish_no,
+			user_id, 
+			trip_no, 
+			post_no
+		FROM wish
+		WHERE user_id = #{userId}
+	</select>
+	
+	<select id="checkDuplication" parameterType="integer" resultMap="WishSelectMap">
+		SELECT
+			wish_no,
+			user_id, 
+			trip_no, 
+			post_no
+		FROM wish
+		WHERE trip_no = #{postNo}
+	</select>
+	
+	<select id="listWishByPost"	parameterType="wish"	 resultMap="WishSelectMap">
+		SELECT wish_no, user_id, trip_no, post_no			
+		FROM wish
+		WHERE trip_no = #{postNo:NUMERIC}	
+	</select>
+	
+	<select id="getTotalWishByPost"	parameterType="wish"	 resultType="int">
+		SELECT COUNT(*)
+		FROM ( SELECT wish_no, user_id, trip_no, post_no			
+				  FROM wish
+				  WHERE trip_no = #{postNo:NUMERIC} ) countTable	
+	</select>
+	 
+</mapper>

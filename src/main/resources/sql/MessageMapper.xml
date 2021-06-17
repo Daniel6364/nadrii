@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper
+		PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="MessageMapper">
+
+	<resultMap type="message" id="MessageSelectMap">
+		<result property="messageNo" column="message_no" jdbcType="NUMERIC"/>
+		<result property="senderId" column="sender_id" jdbcType="VARCHAR"/>
+		<result property="receiverId" column="receiver_id" jdbcType="VARCHAR"/>
+		<result property="text" column="text" jdbcType="VARCHAR"/>
+		<result property="regDate" column="reg_date" jdbcType="VARCHAR"/>
+		<result property="readFlag" column="read_flag" jdbcType="VARCHAR"/>		
+	</resultMap>
+	
+	<!-- 메시지 작성 -->
+	<insert id="addMessage" parameterType="message">
+		INSERT 
+		INTO message
+		(message_no, 
+		sender_id, 
+		receiver_id, 
+		text,
+		reg_date,
+		read_flag)
+		values
+		(seq_message_message_no.nextval,
+		#{senderId},
+		#{receiverId},
+		#{text},
+		SYSDATE,
+		'1')
+	</insert>
+	
+	
+	<!-- 메시지 읽기 -->
+	<select id="getMessage" parameterType="integer" resultMap="MessageSelectMap">
+	
+		SELECT
+			message_no, 
+			sender_id, 
+			receiver_id, 
+			text,
+			reg_date,
+			read_flag
+		FROM message
+		WHERE message_no = #{messageNo}	
+		
+	</select>
+	
+	<!--받은 메시지 전체 목록 -->
+	<select id="listMessage" parameterType="string" resultMap="MessageSelectMap">
+	
+		SELECT 
+			message_no, 
+			sender_id, 
+			receiver_id, 
+			text,
+			reg_date,
+			read_flag
+		FROM message
+		WHERE receiver_id = #{userId}
+		ORDER BY read_flag, message_no DESC
+		
+	</select>
+	
+	<!-- 메시지 읽음 표시 -->
+	<update id="updateReadFlag" parameterType="integer">
+
+		UPDATE Message
+		SET	read_flag = '0'
+		WHERE message_no =#{messageNo}
+
+	</update>
+	
+	<!-- 안읽은 메시지 목록 -->
+	<select id="listMessageToRead" parameterType="string" resultMap="MessageSelectMap">
+	
+		SELECT 
+			message_no, 
+			sender_id, 
+			receiver_id, 
+			text,
+			reg_date,
+			read_flag
+		FROM message
+		WHERE receiver_id =#{user_id}
+		AND read_flag = '1'
+		ORDER BY message_no DESC
+	</select>
+	
+	<!--보낸 메시지 전체 목록 -->
+	<select id="listSendMessage" parameterType="string" resultMap="MessageSelectMap">
+	
+		SELECT 
+			message_no, 
+			sender_id, 
+			receiver_id, 
+			text,
+			reg_date,
+			read_flag
+		FROM message
+		WHERE sender_id = #{userId}
+		ORDER BY message_no DESC
+		
+	</select>
+	
+	<delete id="deleteMessage" parameterType="integer">
+		DELETE 
+		FROM message
+		WHERE message_no =#{messageNo}
+	
+	</delete>
+	 
+</mapper>

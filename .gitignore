@@ -1,0 +1,5 @@
+/build/
+/bin/
+
+# Project exclude paths
+/target/
